@@ -1,10 +1,14 @@
 package com.poss.poss;
+
+import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.location.Location;
 import android.location.LocationListener;
@@ -17,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Random;
+
 import android.database.sqlite.*;
 
 public class LocationsManager {
@@ -25,17 +30,21 @@ public class LocationsManager {
     private int tripID;
     private File db;
     private SQLiteDatabase htdb;
+
     public LocationsManager(Context context) {
         pathString = context.getFilesDir().getPath() + "/locs.sqlite";
         db = new File(pathString);
     }
+
     public void delete() {
         htdb.deleteDatabase(db);
     }
+
     public void start() {
         htdb = SQLiteDatabase.openOrCreateDatabase(db, null);
         htdb.execSQL(_INITLOCS);
     }
+
     public void startTrip(Context context) {
         tripID++;
         LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
@@ -50,10 +59,14 @@ public class LocationsManager {
                 int day = c.get(Calendar.DAY_OF_MONTH);
                 int month = c.get(Calendar.MONTH);
                 int year = c.get(Calendar.YEAR);
-                int id = newLocation(y,x,minute,hour,day,month,year);
+                int id = newLocation(y, x, minute, hour, day, month, year);
             }
+
             @Override
-            public void onStatusChanged(String lols,int lol, Bundle lolol) {};
+            public void onStatusChanged(String lols, int lol, Bundle lolol) {
+            }
+
+            ;
 
             public void onProviderEnabled(String provider) {
             }
@@ -61,6 +74,16 @@ public class LocationsManager {
             public void onProviderDisabled(String provider) {
             }
         };
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
 
     }
@@ -87,8 +110,8 @@ public class LocationsManager {
         htdb.insert("Locs", null, cvLaws);
         return newid;
     }
-    public ArrayList<Location> searchTrip (int tID) {
-        ArrayList<Location> locs = new ArrayList<>();
+    public ArrayList<TripPoint> searchTrip (int tID) {
+        ArrayList<TripPoint> locs = new ArrayList<>();
         String where = "";
         where += "tripID like '" + tID + "'";
         Cursor c = htdb.query("Locs", null, where, null, null, null, null, null);
@@ -105,7 +128,7 @@ public class LocationsManager {
                     int day = c.getInt(c.getColumnIndex("day"));
                     int month = c.getInt(c.getColumnIndex("month"));
                     int year = c.getInt(c.getColumnIndex("year"));
-                    Location loc = new Location(id, y, x, minute, hour, day, month, year);
+                    TripPoint loc = new TripPoint(id, y, x, minute, hour, day, month, year);
                     locs.add(loc);
                 } while (c.moveToNext());
             c.close();
