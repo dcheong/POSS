@@ -15,80 +15,66 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 
 import java.io.File;
-import java.text.ParseException;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.Random;
-
-import android.database.sqlite.*;
-
 public class LocationsManager {
     private final String _INITLOCS = "CREATE TABLE IF NOT EXISTS Locs(id INTEGER, tripID INTEGER, y DOUBLE, x DOUBLE, minute INTEGER, hour INTEGER, day INTEGER, month INTEGER, year INTEGER);";
     private String pathString;
     private int tripID;
     private File db;
     private SQLiteDatabase htdb;
+    private Context context;
 
     public LocationsManager(Context context) {
         pathString = context.getFilesDir().getPath() + "/locs.sqlite";
         db = new File(pathString);
     }
 
-    public void delete() {
-        htdb.deleteDatabase(db);
-    }
-
     public void start() {
         htdb = SQLiteDatabase.openOrCreateDatabase(db, null);
         htdb.execSQL(_INITLOCS);
     }
+    private LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+    private LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            double y = location.getLatitude();
+            double x = location.getLongitude();
+            Calendar c = Calendar.getInstance();
+            int minute = c.get(Calendar.MINUTE);
+            int hour = c.get(Calendar.HOUR_OF_DAY);
+            int day = c.get(Calendar.DAY_OF_MONTH);
+            int month = c.get(Calendar.MONTH);
+            int year = c.get(Calendar.YEAR);
+            int id = newLocation(y, x, minute, hour, day, month, year);
+        }
 
-    public void startTrip(Context context) {
+        @Override
+        public void onStatusChanged(String lols, int lol, Bundle lolol) {
+        }
+
+        public void onProviderEnabled(String provider) {
+        }
+
+        public void onProviderDisabled(String provider) {
+        }
+    };
+    public boolean startTrip(Context context) {
         tripID++;
-        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-        LocationListener locationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                double y = location.getLatitude();
-                double x = location.getLongitude();
-                Calendar c = Calendar.getInstance();
-                int minute = c.get(Calendar.MINUTE);
-                int hour = c.get(Calendar.HOUR_OF_DAY);
-                int day = c.get(Calendar.DAY_OF_MONTH);
-                int month = c.get(Calendar.MONTH);
-                int year = c.get(Calendar.YEAR);
-                int id = newLocation(y, x, minute, hour, day, month, year);
-            }
-
-            @Override
-            public void onStatusChanged(String lols, int lol, Bundle lolol) {
-            }
-
-            ;
-
-            public void onProviderEnabled(String provider) {
-            }
-
-            public void onProviderDisabled(String provider) {
-            }
-        };
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return false;
         }
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
-
-    }
-    public void stopTrip() {
-
+        return true;
+        }
+    public boolean stopTrip() {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return true;
+        }
+        locationManager.removeUpdates(locationListener);
+        return false;
     }
     public int newLocation(double y, double x, int minute, int hour, int day, int month, int year) {
         int newid = 0;
