@@ -13,6 +13,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -29,15 +30,11 @@ import android.view.View;
 import android.widget.Button;
 
 
-import com.google.android.gms.location.LocationServices;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.overlays.BasicInfoWindow;
 import org.osmdroid.bonuspack.overlays.Polygon;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.bonuspack.*;
@@ -65,6 +62,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -240,10 +239,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (id == R.id.action_weather) {
             if (isNetworkAvailable(getApplicationContext()) && listeningForLocation) {
                 Weather weather = new Weather();
-                String report = weather.fetchWeather(latitude, longitude);
+                String report = Weather.fetchWeather(latitude, longitude);
                 if (report != null) {
-                    Snackbar.make(MainActivity.this.getCurrentFocus(), report, Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
+                    try {
+                        JSONObject reportObject = new JSONObject(report);
+                        JSONArray weatherArray = (JSONArray) reportObject.get("weather");
+                        JSONObject mainObject = (JSONObject) reportObject.get("main");
+                        JSONObject desc = (JSONObject) weatherArray.get(0);
+                        String description = desc.getString("description");
+                        double temperature = Double.parseDouble(mainObject.getString("temp")) - 273.15;
+                        String tempString = String.format("%3.1f", temperature);
+                        Snackbar.make(MainActivity.this.getCurrentFocus(), description + ". Temperature: " + tempString + " Celsius." , Snackbar.LENGTH_LONG)
+                                .setAction("Action", null).show();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
                 } else {
                     Snackbar.make(MainActivity.this.getCurrentFocus(), "Could not retrieve weather.", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();

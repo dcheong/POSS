@@ -37,7 +37,7 @@ public class LocationsManager {
     }
 
     public void delete() {
-        htdb.deleteDatabase(db);
+        SQLiteDatabase.deleteDatabase(db);
     }
 
     public void start() {
@@ -66,15 +66,13 @@ public class LocationsManager {
             public void onStatusChanged(String lols, int lol, Bundle lolol) {
             }
 
-            ;
-
             public void onProviderEnabled(String provider) {
             }
 
             public void onProviderDisabled(String provider) {
             }
         };
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding

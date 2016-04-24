@@ -10,6 +10,7 @@ import org.json.simple.*;
 
 public class Weather {
 	public static String fetchWeather(double latitude, double longitude) {
+        String line = null;
         if (latitude != 1000) {
             String api = "822044e4e41a50a8e4bcc246f07380a5";
 
@@ -23,11 +24,8 @@ public class Weather {
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
 
-                String line = null;
 
-                while ((line = br.readLine()) != null) {
-                    System.out.println(line);
-                }
+                line = br.readLine();
 
                 //Object JSONValue.parse(line);
 
@@ -35,7 +33,7 @@ public class Weather {
                 System.out.println("URL Not Working");
             }
 
-            return "";
+            return line;
 
         }
 		return null;
