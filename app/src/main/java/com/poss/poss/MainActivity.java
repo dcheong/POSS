@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -15,6 +16,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -28,9 +30,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osmdroid.bonuspack.overlays.BasicInfoWindow;
+import org.osmdroid.bonuspack.overlays.GroundOverlay;
 import org.osmdroid.bonuspack.overlays.Polygon;
+import org.osmdroid.bonuspack.overlays.Polyline;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.PathOverlay;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,6 +61,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private double longitude = 1000;
     private double latitude = 1000;
 
+    private GeoPoint lastGP;
+
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -74,6 +81,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     currentTripID = db.newTrip();
                     Snackbar.make(view, "Trip Started", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
+                    GeoPoint newGP = new GeoPoint(latitude, longitude);
+                    drawTripPoint(newGP);
+                    lastGP = newGP;
                 } else {
                     onTrip = false;
                     Snackbar.make(view, "Trip Finished", Snackbar.LENGTH_LONG)
@@ -108,8 +118,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         locListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                longitude = location.getLongitude();
-                latitude = location.getLatitude();
+                longitude = location.getLongitude() + 210;
+                latitude = location.getLatitude() - 20;
                 Log.d("Location changed", latitude + " " + longitude);
                 if (onTrip) {
                     Calendar c = Calendar.getInstance();
@@ -118,7 +128,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     int day = c.get(Calendar.DAY_OF_MONTH);
                     int month = c.get(Calendar.MONTH);
                     int year = c.get(Calendar.YEAR);
+                    GeoPoint newGP = new GeoPoint(latitude, longitude);
                     db.newLocation(currentTripID, latitude, longitude, minute, hour, day, month, year);
+                    drawTripPoint(newGP);
+                    drawToLastPoint(newGP);
+                    lastGP = newGP;
+
                 }
             }
 
@@ -161,8 +176,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mpaRegions = new ArrayList<>();
         drawMPARegions();
     }
+    public void drawTripPoint(GeoPoint gp) {
+        Drawable pointIcon = ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_trip_point);
+        GroundOverlay newPointOverlay = new GroundOverlay(this);
+        newPointOverlay.setPosition(gp);
+        newPointOverlay.setImage(pointIcon.mutate());
+        newPointOverlay.setDimensions(2000.0f);
+        m_mapView.getOverlays().add(newPointOverlay);
+        m_mapView.invalidate();
+    }
+    public void drawToLastPoint(GeoPoint gp) {
+        Polyline pLine = new Polyline(this);
+        ArrayList<GeoPoint> oneTwo = new ArrayList<>();
+        oneTwo.add(lastGP);
+        oneTwo.add(gp);
+        pLine.setPoints(oneTwo);
+        pLine.setColor(Color.BLACK);
+        pLine.setWidth(100.0f);
+        m_mapView.getOverlays().add(pLine);
+        m_mapView.invalidate();
 
-
+    }
     public void drawMPARegions() {
         try {
 
