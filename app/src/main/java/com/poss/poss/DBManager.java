@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 import android.database.sqlite.*;
 
@@ -205,6 +206,73 @@ public class DBManager {
     }
     public void close() {
         htdb.close();
+    }
+
+    public String[] shareTrip(int tripID) {
+        Cursor c = htdb.query("Locs", null, "tripID like '" + tripID + "'", null, null, null, null, null);
+        ArrayList<TripPoint> trip = searchTrip(tripID);
+        double y0 = 0;
+        double x0 = 0;
+        double y = 0;
+        double x = 0;
+        double total = 0;
+        int hourStart = 24;
+        int minuteStart = 0;
+        int hourEnd = 0;
+        int minuteEnd = 0;
+        if (c!=null) {
+            do {
+                y0 = y;
+                x0 = x;
+                y = c.getDouble(c.getColumnIndex("y"));
+                x = c.getDouble(c.getColumnIndex("x"));
+                int hour = c.getInt(c.getColumnIndex("hour"));
+                int minute = c.getInt(c.getColumnIndex("minute"));
+                if (hour <= hourStart) {
+                    if (hour == hourStart && minute > minuteStart) {
+                        minuteStart = minute;
+                    }
+                    hourStart = hour;
+                }
+                if (hour >= hourEnd) {
+                    if (hour == hourEnd && minute < minuteStart) {
+                        minuteStart = minute;
+                    }
+                    hourStart = hour;
+                }
+                if (x0!=0 || y0!=0){
+                    double dy = y-y0;
+                    double dx = x-x0;
+                    total += Math.sqrt(dy*dy +dx*dx)*111.325;
+                }
+            } while (c.moveToNext());
+            c.close();
+        }
+        int hours = hourEnd-hourStart;
+        String minutes = "";
+        if (minuteEnd==minuteStart) {
+            minutes = "00";
+        } else if (minuteEnd<minuteStart){
+            hours=hours-1;
+            minutes = 60 - (minuteStart-minuteEnd) + "";
+        } else {
+            if ((minuteEnd-minuteStart)<10) {
+                minutes = "0" + (minuteEnd-minuteStart);
+            } else {
+                minutes = minuteEnd-minuteStart + "";
+            }
+        }
+        String points = "";
+        for (TripPoint point : trip) {
+            points += "[" + point.getY() + "," + point.getX() + "," + point.getHour() + "," + point.getMinute() + "]";
+        }
+        String[] toReturn = new String[3];
+        toReturn[0] = "Trip Length: " + total;
+        toReturn[1] = "Trip Duration: " + hours + ":" + minutes;
+        toReturn[2] = "Points: " + points;
+
+
+        return toReturn;
     }
 
 }
