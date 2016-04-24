@@ -11,9 +11,9 @@
             android:icon="@drawable/ic_menu_send"
             android:title="Trip" />
         <item
-            android:id="@+id/weather"
+            android:id="@+id/share"
             android:icon="@drawable/ic_menu_share"
-            android:title="Weather" />
+            android:title="Share" />
     </group>
 
 </menu>

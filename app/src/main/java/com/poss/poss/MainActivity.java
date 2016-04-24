@@ -320,9 +320,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (id == R.id.laws) {
             Intent i = new Intent(MainActivity.this, LawActivity.class);
             startActivity(i);
-        } else if (id == R.id.trip) {
+        } else if (id == R.id.mapLink) {
 
-        } else if (id == R.id.weather) {
+        } else if (id == R.id.share) {
 
         }
 
