@@ -10,10 +10,6 @@
             android:id="@+id/mapLink"
             android:icon="@drawable/ic_menu_send"
             android:title="Trip" />
-        <item
-            android:id="@+id/share"
-            android:icon="@drawable/ic_menu_share"
-            android:title="Share" />
     </group>
 
 </menu>

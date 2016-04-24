@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -26,6 +27,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -36,12 +38,15 @@ import org.osmdroid.bonuspack.overlays.Polygon;
 import org.osmdroid.bonuspack.overlays.Polyline;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.PathOverlay;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
 
@@ -109,8 +114,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             navigationView.setNavigationItemSelectedListener(this);
             instantiateMap();
 
-
-        }
+        DummyOverlay dumOverlay = new DummyOverlay(this);
+        List<Overlay> listOfOverlays = m_mapView.getOverlays();
+        listOfOverlays.clear();
+        listOfOverlays.add(dumOverlay);
+    }
 
     public void startLocationUpdates() {
         locManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -160,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 120000, 2, locListener);
+        locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 2, locListener);
 
 
     }
@@ -179,11 +187,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
     public void drawTripPoint(GeoPoint gp) {
         Drawable pointIcon = ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_trip_point);
+        Drawable boatIcon = ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_directions_boat_black_48dp);
         GroundOverlay newPointOverlay = new GroundOverlay(this);
         newPointOverlay.setPosition(gp);
         newPointOverlay.setImage(pointIcon.mutate());
-        newPointOverlay.setDimensions(2000.0f);
+        newPointOverlay.setDimensions(4000.0f);
+        GroundOverlay boatOverlay = new GroundOverlay(this);
+        boatOverlay.setPosition(gp);
+        boatOverlay.setImage(boatIcon.mutate());
+        boatOverlay.setDimensions(3000.0f);
         m_mapView.getOverlays().add(newPointOverlay);
+        m_mapView.getOverlays().add(boatOverlay);
         m_mapView.invalidate();
     }
     public void drawToLastPoint(GeoPoint gp) {
@@ -323,7 +337,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.mapLink) {
 
         } else if (id == R.id.share) {
-
+            shareTrip();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -336,11 +350,38 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     public void shareTrip() {
         String[] material=db.shareTrip(currentTripID);
+        String material2 = Arrays.toString(material);
+        Log.d("material2", material2);
         Intent sharingIntent = new Intent(Intent.ACTION_SEND);
         sharingIntent.setType("text/plain");
         sharingIntent.putExtra(Intent.EXTRA_SUBJECT, "Trip " + currentTripID + " Data");
-        sharingIntent.putExtra(Intent.EXTRA_TEXT, material);
+        if (material.length== 0 || material==null) {
+            Log.d( null, "ASHAHSHSHSALFHSAJFHSAFHASBFHSAFBHSAFBHSALBHJKBFHJSAKBFHJKBFHJAKFBSAKBFHSAKBFHSKABFSAKBFHSAKBFHSAKBFHSAKBFHSAKBFHSAKFSAKBFHSAKBFHSAKBFHJSALBFHAKBFHJAKBFHSAKBFHSAKBFHASKBFHJSAKBFHSAKBFHSAKBFHSAKBFHSAKBFHSAKBFHSAKBFHSAKBFHSAKFBHAKBFHASKFBHAKFBHA");
+        }
+        sharingIntent.putExtra(Intent.EXTRA_TEXT, material2);
         startActivity(Intent.createChooser(sharingIntent, "Share via"));
     }
+
+    public class DummyOverlay extends org.osmdroid.views.overlay.Overlay {
+
+        public DummyOverlay(Context ctx) {
+            super(ctx); // TODO Auto-generated constructor stub
+        }
+
+        @Override
+        protected void draw(Canvas c, MapView osmv, boolean shadow) {}
+
+        @Override
+        public boolean onDoubleTap(MotionEvent e, MapView mapView) {
+            // This stops the 'jump to, and zoom in' of the default behaviour
+            if (latitude != 1000 && longitude != 1000) {
+                m_mapView.getController().setCenter(new GeoPoint(latitude, longitude));
+                drawTripPoint(new GeoPoint(latitude, longitude));
+            }
+            return true;// This stops the double tap being passed on to the mapview
+        }
+    }
+
+
 
 }

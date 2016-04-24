@@ -171,8 +171,6 @@ public class LawActivity extends AppCompatActivity
         if (id == R.id.laws) {
         } else if (id == R.id.mapLink) {
             finish();
-        } else if (id == R.id.share) {
-
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

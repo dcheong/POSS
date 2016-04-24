@@ -130,7 +130,7 @@ public class DBManager {
         DatabaseUtils.dumpCursor(c);
         Log.d("columnns ", String.valueOf(c.getColumnCount()));
         c.moveToFirst();
-        if (c!=null) {
+        if (c.getCount() > 0) {
                 do {
                     String provincec = c.getString(c.getColumnIndex("province"));
                     String municipalityc = c.getString(c.getColumnIndex("municipality"));
@@ -187,7 +187,7 @@ public class DBManager {
         DatabaseUtils.dumpCursor(c);
         Log.d("columnns ", String.valueOf(c.getColumnCount()));
         c.moveToFirst();
-        if (c!=null) {
+        if (c.getCount() > 0) {
             do {
                 int id = c.getInt(c.getColumnIndex("id"));
                 double y = c.getDouble(c.getColumnIndex("y"));
@@ -220,7 +220,9 @@ public class DBManager {
         int minuteStart = 0;
         int hourEnd = 0;
         int minuteEnd = 0;
-        if (c!=null) {
+        DatabaseUtils.dumpCursor(c);
+        if (c.getCount() > 0) {
+            c.moveToFirst();
             do {
                 y0 = y;
                 x0 = x;
