@@ -375,7 +375,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         public boolean onDoubleTap(MotionEvent e, MapView mapView) {
             // This stops the 'jump to, and zoom in' of the default behaviour
             if (latitude != 1000 && longitude != 1000) {
-                m_mapView.getController().setCenter(new GeoPoint(latitude, longitude));
+                m_mapView.getController().animateTo(new GeoPoint(latitude, longitude));
                 drawTripPoint(new GeoPoint(latitude, longitude));
             }
             return true;// This stops the double tap being passed on to the mapview
