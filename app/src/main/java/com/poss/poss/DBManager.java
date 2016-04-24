@@ -1,10 +1,14 @@
 package com.poss.poss;
 
+import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
+import android.location.LocationManager;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import java.io.File;
@@ -16,21 +20,26 @@ import java.util.Date;
 import java.util.Random;
 import android.database.sqlite.*;
 
-public class PhillyLawsManager {
+public class DBManager {
     private final String _INITLAWS = "CREATE TABLE IF NOT EXISTS Laws(id INTEGER, province TEXT, municipality TEXT, barangay TEXT, monthStart INTEGER, monthEnd INTEGER, dayStart INTEGER, dayEnd INTEGER, yearStart INTEGER, yearEnd INTEGER, practice TEXT, fine INTEGER);";
+    private final String _INITLOCS = "CREATE TABLE IF NOT EXISTS Locs(tripID INTEGER, y DOUBLE, x DOUBLE, minute INTEGER, hour INTEGER, day INTEGER, month INTEGER, year INTEGER);";
     private String pathString;
     private File db;
     private SQLiteDatabase htdb;
-    public PhillyLawsManager(Context context) {
+    public DBManager(Context context) {
         pathString = context.getFilesDir().getPath() + "/poss.sqlite";
         db = new File(pathString);
     }
     public void delete() {
         SQLiteDatabase.deleteDatabase(db);
     }
+    public void clearTrips() {
+        htdb.delete("Locs", null, null);
+    }
     public void start() {
         htdb = SQLiteDatabase.openOrCreateDatabase(db, null);
         htdb.execSQL(_INITLAWS);
+        htdb.execSQL(_INITLOCS);
     }
     public int newLaw(String province, String municipality, String barangay, int m1, int m2, int d1, int d2, int y1, int y2, String practice, int fine) {
         Random rand = new Random();
@@ -145,6 +154,54 @@ public class PhillyLawsManager {
             c.close();
         }
         return Laws;
+    }
+    public int newTrip() {
+        int newid = 0;
+        Cursor checkidExists = null;
+        do {
+            checkidExists = htdb.rawQuery("Select * from Locs where tripID>" + newid++, null);
+            Log.d("newid value:", String.valueOf(newid));
+        } while (checkidExists.getCount()>0);
+        return newid;
+    }
+
+    public void newLocation(int tripID, double y, double x, int minute, int hour, int day, int month, int year) {
+        SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy");
+        ContentValues cvLaws = new ContentValues();
+        cvLaws.put("tripID", tripID);
+        cvLaws.put("y", y);
+        cvLaws.put("x", x);
+        cvLaws.put("minute", minute);
+        cvLaws.put("hour", hour);
+        cvLaws.put("day", day);
+        cvLaws.put("month", month);
+        cvLaws.put("year", year);
+        htdb.insert("Locs", null, cvLaws);
+    }
+    public ArrayList<TripPoint> searchTrip (int tID) {
+        ArrayList<TripPoint> locs = new ArrayList<>();
+        String where = "";
+        where += "tripID like '" + tID + "'";
+        Cursor c = htdb.query("Locs", null, where, null, null, null, null, null);
+        DatabaseUtils.dumpCursor(c);
+        Log.d("columnns ", String.valueOf(c.getColumnCount()));
+        c.moveToFirst();
+        if (c!=null) {
+            do {
+                int id = c.getInt(c.getColumnIndex("id"));
+                double y = c.getDouble(c.getColumnIndex("y"));
+                double x = c.getDouble(c.getColumnIndex("x"));
+                int minute = c.getInt(c.getColumnIndex("minute"));
+                int hour = c.getInt(c.getColumnIndex("hour"));
+                int day = c.getInt(c.getColumnIndex("day"));
+                int month = c.getInt(c.getColumnIndex("month"));
+                int year = c.getInt(c.getColumnIndex("year"));
+                TripPoint loc = new TripPoint(id, y, x, minute, hour, day, month, year);
+                locs.add(loc);
+            } while (c.moveToNext());
+            c.close();
+        }
+        return locs;
     }
     public void close() {
         htdb.close();

@@ -6,4 +6,16 @@
         android:orderInCategory="100"
         android:title="@string/action_weather"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_populate"
+        android:orderInCategory="100"
+        android:title="PopulateDB"
+        app:showAsAction="never"
+        />
+    <item
+        android:id="@+id/action_clear"
+        android:orderInCategory="100"
+        android:title="Clear Trips"
+        app:showAsAction="never"
+        />
 </menu>

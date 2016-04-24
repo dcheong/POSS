@@ -10,6 +10,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -25,6 +26,7 @@ import android.view.MenuItem;
 import android.view.View;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.osmdroid.bonuspack.overlays.BasicInfoWindow;
 import org.osmdroid.bonuspack.overlays.Polygon;
 import org.osmdroid.util.GeoPoint;
@@ -33,6 +35,7 @@ import org.osmdroid.views.MapView;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
 
@@ -45,6 +48,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private LocationListener locListener;
     private LocationManager locManager;
     private boolean listeningForLocation = false;
+    private boolean onTrip = false;
+    private int currentTripID;
+
+    private DBManager db;
 
     private double longitude = 1000;
     private double latitude = 1000;
@@ -52,21 +59,23 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        db = new DBManager(getApplicationContext());
+        db.start();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
-            private boolean log = false;
-            private LocationsManager locman = new LocationsManager(getApplicationContext());
             @Override
             public void onClick(View view) {
-                if (!log) {
-                    log = locman.startTrip(getApplicationContext());
+                if (!onTrip) {
+                    onTrip = true;
+                    currentTripID = db.newTrip();
                     Snackbar.make(view, "Trip Started", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 } else {
-                    log = locman.stopTrip();
+                    onTrip = false;
                     Snackbar.make(view, "Trip Finished", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 }
@@ -81,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if (isNetworkAvailable(getApplicationContext())) {
             Log.d("network available", "Network Is Available");
-//            startLocationUpdates();
+            startLocationUpdates();
             listeningForLocation = true;
         }
 
@@ -90,58 +99,55 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             instantiateMap();
 
 
-
-/*
-        final PhillyLawsManager lols = new PhillyLawsManager(getApplicationContext());
-        lols.start();
-        int id = lols.newLaw("Batangas", "San Juan", "Laiya-Aplaya", 7,7, 14,14, 1975, 3000, "Failure to submit required reports. - The owner, master or operator of a fishing boat who fails to submit a required report within thirty (30) days after due date shall be fined in an amount not exceeding five (P5.00) pesos.", 5);
-        id = lols.newLaw("Batangas", "San Juan", "", 4,4, 15, 30, 2016, 2016, "Vessel engaging in fishing without license. - The owner, master or operator of a fishing boat engaging in fishing operations without a license shall be fined in an amount not exceeding one thousand pesos (P1,000.00) for each month or fraction thereof of operation.", 1000);
-        id = lols.newLaw("Batangas", "", "", 7, 7, 14, 14, 1975, 3000, "SEC. 41.  Compromise. - With the approval of the Secretary, the Director may, at any stage of the proceedings, compromise any case arising under any provision of this decree, subject to the following schedule of administrative fines: a) Vessel entering fishery reserve or closed areas. - Any vessel, licensed or unlicensed, entering a fishery reserve or a declared closed area for the purpose of fishing shall be fined in a sum not exceeding five thousand (P5,000.00) pesos.", 5000);
-        id = lols.newLaw("", "", "", 0, 0, 0, 0, 0, 3000, "SEC. 101. Violation of Catch Ceilings. - It shall be unlawful for any person to fish in violation of catch ceilings as determined by the Department. Violation of the provision of this section shall be punished by imprisonment of six (6) months and one (1) day to six (6) years and/or a fine of Fifty Thousand Pesos (P50,000.00) and forfeiture of the catch, and fishing equipment used and revocation of license.", 50000);
-        lols.close();
-*/
-
-
         }
 
-//    public void startLocationUpdates() {
-//        locManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-//
-//        // Define a listener that responds to location updates
-//        locListener = new LocationListener() {
-//            @Override
-//            public void onLocationChanged(Location location) {
-//                longitude = location.getLongitude();
-//                latitude = location.getLatitude();
-//                Log.d("Location changed", latitude + " " + longitude);
-//            }
-//
-//            public void onStatusChanged(String provider, int status, Bundle extras) {
-//            }
-//
-//            public void onProviderEnabled(String provider) {
-//            }
-//
-//            public void onProviderDisabled(String provider) {
-//            }
-//        };
-//
-//// Register the listener with the Location Manager to receive location updates
-//
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            //
-//            //    ActivityCompat#requestPermissions
-//            // here to request the missing permissions, and then overriding
-//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//            //                                          int[] grantResults)
-//            // to handle the case where the user grants the permission. See the documentation
-//            // for ActivityCompat#requestPermissions for more details.
-//            return;
-//        }
-//        locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locListener);
-//
-//
-//    }
+    public void startLocationUpdates() {
+        locManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+        // Define a listener that responds to location updates
+        locListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                longitude = location.getLongitude();
+                latitude = location.getLatitude();
+                Log.d("Location changed", latitude + " " + longitude);
+                if (onTrip) {
+                    Calendar c = Calendar.getInstance();
+                    int minute = c.get(Calendar.MINUTE);
+                    int hour = c.get(Calendar.HOUR_OF_DAY);
+                    int day = c.get(Calendar.DAY_OF_MONTH);
+                    int month = c.get(Calendar.MONTH);
+                    int year = c.get(Calendar.YEAR);
+                    db.newLocation(currentTripID, latitude, longitude, minute, hour, day, month, year);
+                }
+            }
+
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+            }
+
+            public void onProviderEnabled(String provider) {
+            }
+
+            public void onProviderDisabled(String provider) {
+            }
+        };
+
+// Register the listener with the Location Manager to receive location updates
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            //
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 120000, 2, locListener);
+
+
+    }
 
     public void instantiateMap() {
         m_mapView = (MapView) findViewById(R.id.map);
@@ -236,16 +242,35 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (id == R.id.action_weather) {
             if (isNetworkAvailable(getApplicationContext()) && listeningForLocation) {
                 Weather weather = new Weather();
-                String report = weather.fetchWeather(latitude, longitude);
+                String report = Weather.fetchWeather(latitude, longitude);
                 if (report != null) {
-                    Snackbar.make(MainActivity.this.getCurrentFocus(), report, Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
+                    try {
+                        JSONObject reportObject = new JSONObject(report);
+                        JSONArray weatherArray = (JSONArray) reportObject.get("weather");
+                        JSONObject mainObject = (JSONObject) reportObject.get("main");
+                        JSONObject desc = (JSONObject) weatherArray.get(0);
+                        String description = desc.getString("description");
+                        double temperature = Double.parseDouble(mainObject.getString("temp")) - 273.15;
+                        String tempString = String.format("%3.1f", temperature);
+                        Snackbar.make(MainActivity.this.getCurrentFocus(), description + ". Temperature: " + tempString + " Celsius.", Snackbar.LENGTH_LONG)
+                                .setAction("Action", null).show();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
                 } else {
                     Snackbar.make(MainActivity.this.getCurrentFocus(), "Could not retrieve weather.", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 }
 
             }
+        } else if (id == R.id.action_clear) {
+            db.clearTrips();
+        } else if (id == R.id.action_populate) {
+            db.newLaw("Batangas", "San Juan", "Laiya-Aplaya", 7,7, 14,14, 1975, 3000, "Failure to submit required reports. - The owner, master or operator of a fishing boat who fails to submit a required report within thirty (30) days after due date shall be fined in an amount not exceeding five (P5.00) pesos.", 5);
+            db.newLaw("Batangas", "San Juan", "", 4,4, 15, 30, 2016, 2016, "Vessel engaging in fishing without license. - The owner, master or operator of a fishing boat engaging in fishing operations without a license shall be fined in an amount not exceeding one thousand pesos (P1,000.00) for each month or fraction thereof of operation.", 1000);
+            db.newLaw("Batangas", "", "", 7, 7, 14, 14, 1975, 3000, "SEC. 41.  Compromise. - With the approval of the Secretary, the Director may, at any stage of the proceedings, compromise any case arising under any provision of this decree, subject to the following schedule of administrative fines: a) Vessel entering fishery reserve or closed areas. - Any vessel, licensed or unlicensed, entering a fishery reserve or a declared closed area for the purpose of fishing shall be fined in a sum not exceeding five thousand (P5,000.00) pesos.", 5000);
+            db.newLaw("", "", "", 0, 0, 0, 0, 0, 3000, "SEC. 101. Violation of Catch Ceilings. - It shall be unlawful for any person to fish in violation of catch ceilings as determined by the Department. Violation of the provision of this section shall be punished by imprisonment of six (6) months and one (1) day to six (6) years and/or a fine of Fifty Thousand Pesos (P50,000.00) and forfeiture of the catch, and fishing equipment used and revocation of license.", 50000);
         }
 
         return super.onOptionsItemSelected(item);
