@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -332,4 +333,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public boolean isNetworkAvailable(final Context context) {
         return ((ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo() != null;
     }
+
+    public void shareTrip() {
+        String[] material=db.shareTrip(currentTripID);
+        Intent sharingIntent = new Intent(Intent.ACTION_SEND);
+        sharingIntent.setType("text/plain");
+        sharingIntent.putExtra(Intent.EXTRA_SUBJECT, "Trip " + currentTripID + " Data");
+        sharingIntent.putExtra(Intent.EXTRA_TEXT, material);
+        startActivity(Intent.createChooser(sharingIntent, "Share via"));
+    }
+
 }
