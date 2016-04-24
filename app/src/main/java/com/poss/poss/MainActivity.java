@@ -116,7 +116,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         DummyOverlay dumOverlay = new DummyOverlay(this);
         List<Overlay> listOfOverlays = m_mapView.getOverlays();
-        listOfOverlays.clear();
         listOfOverlays.add(dumOverlay);
     }
 
@@ -127,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         locListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                longitude = location.getLongitude() + 210;
+                longitude = location.getLongitude() + 209;
                 latitude = location.getLatitude() - 20;
                 Log.d("Location changed", latitude + " " + longitude);
                 if (onTrip) {
@@ -234,6 +233,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 tempPoly.setTitle("MPA ZONE");
                 mpaRegions.add(tempPoly);
                 m_mapView.getOverlays().add(tempPoly);
+                Log.d("Polygon", "MPA zone added");
             }
             m_mapView.invalidate();
         } catch (JSONException e) {
