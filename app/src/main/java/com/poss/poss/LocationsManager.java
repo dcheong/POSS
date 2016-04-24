@@ -1,4 +1,5 @@
 package com.poss.poss;
+
 import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Random;
+
 import android.database.sqlite.*;
 
 public class LocationsManager {
@@ -28,41 +30,43 @@ public class LocationsManager {
     private int tripID;
     private File db;
     private SQLiteDatabase htdb;
-    private Context context;
+
     public LocationsManager(Context context) {
-        pathString = "/data/data/YOUR_PACKAGE/databases/locs.sqlite";
+        pathString = context.getFilesDir().getPath() + "/locs.sqlite";
         db = new File(pathString);
-        this.context=context;
     }
+
+    public void delete() {
+        htdb.deleteDatabase(db);
+    }
+
     public void start() {
         htdb = SQLiteDatabase.openOrCreateDatabase(db, null);
         htdb.execSQL(_INITLOCS);
     }
-    private LocationManager locManager;
-    private LocationListener locListener;
-    public boolean startTrip(Context context) {
-        tripID++;
-        locManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
-        // Define a listener that responds to location updates
-        locListener = new LocationListener() {
+    public void startTrip(Context context) {
+        tripID++;
+        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        LocationListener locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                double x = location.getLongitude();
                 double y = location.getLatitude();
-                Log.d("Location changed", x + " " + y);
+                double x = location.getLongitude();
                 Calendar c = Calendar.getInstance();
                 int minute = c.get(Calendar.MINUTE);
                 int hour = c.get(Calendar.HOUR_OF_DAY);
                 int day = c.get(Calendar.DAY_OF_MONTH);
                 int month = c.get(Calendar.MONTH);
                 int year = c.get(Calendar.YEAR);
-                int id = newLocation(y,x,minute, hour, day, month, year);
-
+                int id = newLocation(y, x, minute, hour, day, month, year);
             }
 
-            public void onStatusChanged(String provider, int status, Bundle extras) {
+            @Override
+            public void onStatusChanged(String lols, int lol, Bundle lolol) {
             }
+
+            ;
 
             public void onProviderEnabled(String provider) {
             }
@@ -70,10 +74,7 @@ public class LocationsManager {
             public void onProviderDisabled(String provider) {
             }
         };
-
-// Register the listener with the Location Manager to receive location updates
-
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
@@ -81,18 +82,13 @@ public class LocationsManager {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-            Log.d("", "FAFKLS:AFJKL:JFKEL:NFIEO:NFEIO:NFEIO:NFIAO:NFAIEO:NFIAOE:NFIAO:NFIAEO:ENI");
-            return false;
+            return;
         }
-        locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 300000, 1, locListener);
-        return true;
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+
     }
-    public boolean stopTrip(Context context) {
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            locManager.removeUpdates(locListener);
-        }
-        locManager = null;
-        return false;
+    public void stopTrip() {
+
     }
     public int newLocation(double y, double x, int minute, int hour, int day, int month, int year) {
         int newid = 0;
@@ -123,18 +119,18 @@ public class LocationsManager {
         Log.d("columnns ", String.valueOf(c.getColumnCount()));
         c.moveToFirst();
         if (c!=null) {
-            do {
-                int id = c.getInt(c.getColumnIndex("id"));
-                double y = c.getDouble(c.getColumnIndex("y"));
-                double x = c.getDouble(c.getColumnIndex("x"));
-                int minute = c.getInt(c.getColumnIndex("minute"));
-                int hour = c.getInt(c.getColumnIndex("hour"));
-                int day = c.getInt(c.getColumnIndex("day"));
-                int month = c.getInt(c.getColumnIndex("month"));
-                int year = c.getInt(c.getColumnIndex("year"));
-                TripPoint loc = new TripPoint(id, y, x, minute, hour, day, month, year);
-                locs.add(loc);
-            } while (c.moveToNext());
+                do {
+                    int id = c.getInt(c.getColumnIndex("id"));
+                    double y = c.getDouble(c.getColumnIndex("y"));
+                    double x = c.getDouble(c.getColumnIndex("x"));
+                    int minute = c.getInt(c.getColumnIndex("minute"));
+                    int hour = c.getInt(c.getColumnIndex("hour"));
+                    int day = c.getInt(c.getColumnIndex("day"));
+                    int month = c.getInt(c.getColumnIndex("month"));
+                    int year = c.getInt(c.getColumnIndex("year"));
+                    TripPoint loc = new TripPoint(id, y, x, minute, hour, day, month, year);
+                    locs.add(loc);
+                } while (c.moveToNext());
             c.close();
         }
         return locs;

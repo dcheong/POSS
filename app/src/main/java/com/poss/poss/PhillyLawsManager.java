@@ -26,7 +26,7 @@ public class PhillyLawsManager {
         db = new File(pathString);
     }
     public void delete() {
-        htdb.deleteDatabase(db);
+        SQLiteDatabase.deleteDatabase(db);
     }
     public void start() {
         htdb = SQLiteDatabase.openOrCreateDatabase(db, null);

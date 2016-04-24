@@ -28,6 +28,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
+
+import com.google.android.gms.location.LocationServices;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -67,22 +70,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
-            private boolean log = false;
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Trip has started", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
-                LocationsManager locman = new LocationsManager(getApplicationContext());
-                if (!log) {
-                    if (isNetworkAvailable(getApplicationContext())) {
-                        Log.d("network available", "Network Is Available");
-                        locman.startTrip(getApplicationContext());
-                        listeningForLocation = true;
-                    }
-                } else {
-                    log = locman.stopTrip(getApplicationContext());
-                }
-
             }
         });
 
@@ -92,11 +83,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-//        if (isNetworkAvailable(getApplicationContext())) {
-//            Log.d("network available", "Network Is Available");
-//            startLocationUpdates();
-//            listeningForLocation = true;
-//        }
+        if (isNetworkAvailable(getApplicationContext())) {
+            Log.d("network available", "Network Is Available");
+            startLocationUpdates();
+            listeningForLocation = true;
+        }
 
             NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
             navigationView.setNavigationItemSelectedListener(this);
@@ -105,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 
 /*
-        final PhillyLawsManager lols = new PhillyLawsManager(v);
+        final PhillyLawsManager lols = new PhillyLawsManager(getApplicationContext());
         lols.start();
         int id = lols.newLaw("Batangas", "San Juan", "Laiya-Aplaya", 7,7, 14,14, 1975, 3000, "Failure to submit required reports. - The owner, master or operator of a fishing boat who fails to submit a required report within thirty (30) days after due date shall be fined in an amount not exceeding five (P5.00) pesos.", 5);
         id = lols.newLaw("Batangas", "San Juan", "", 4,4, 15, 30, 2016, 2016, "Vessel engaging in fishing without license. - The owner, master or operator of a fishing boat engaging in fishing operations without a license shall be fined in an amount not exceeding one thousand pesos (P1,000.00) for each month or fraction thereof of operation.", 1000);
@@ -117,44 +108,44 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         }
 
-//    public void startLocationUpdates() {
-//        locManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-//
-//        // Define a listener that responds to location updates
-//        locListener = new LocationListener() {
-//            @Override
-//            public void onLocationChanged(Location location) {
-//                longitude = location.getLongitude();
-//                latitude = location.getLatitude();
-//                Log.d("Location changed", latitude + " " + longitude);
-//            }
-//
-//            public void onStatusChanged(String provider, int status, Bundle extras) {
-//            }
-//
-//            public void onProviderEnabled(String provider) {
-//            }
-//
-//            public void onProviderDisabled(String provider) {
-//            }
-//        };
-//
-//// Register the listener with the Location Manager to receive location updates
-//
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            // TODO: Consider calling
-//            //    ActivityCompat#requestPermissions
-//            // here to request the missing permissions, and then overriding
-//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//            //                                          int[] grantResults)
-//            // to handle the case where the user grants the permission. See the documentation
-//            // for ActivityCompat#requestPermissions for more details.
-//            return;
-//        }
-//        locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locListener);
-//
-//
-//    }
+    public void startLocationUpdates() {
+        locManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+        // Define a listener that responds to location updates
+        locListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                longitude = location.getLongitude();
+                latitude = location.getLatitude();
+                Log.d("Location changed", latitude + " " + longitude);
+            }
+
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+            }
+
+            public void onProviderEnabled(String provider) {
+            }
+
+            public void onProviderDisabled(String provider) {
+            }
+        };
+
+// Register the listener with the Location Manager to receive location updates
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locListener);
+
+
+    }
 
     public void instantiateMap() {
         m_mapView = (MapView) findViewById(R.id.map);
